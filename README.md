@@ -1,2 +1,2 @@
 # freshworks-assignment
-Run by python3 app.py
+Run by python3 main.py

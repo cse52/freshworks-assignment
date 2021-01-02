@@ -21,7 +21,7 @@ def writeLog(action, key):
 
 
 class KVDB:
-	cron = CronTab()
+	cron = CronTab(user='whoisvikas')
 
 	def __init__(self, file_path='./data.txt'):
 		self.file_path = file_path
@@ -30,7 +30,7 @@ class KVDB:
 		self._setInUse(0)
 
 	@staticmethod
-	def showCrons():
+	def showCron():
 		for job in KVDB.cron:
 			print(job)
 
@@ -67,9 +67,16 @@ class KVDB:
 					# set a cron to delete file entry
 					if ttl != -1:
 						now = datetime.now()
-						hrs = int(ttl/60)
 						mins = ttl%60
-						job = KVDB.cron.new(command='{} {} {} {} * python3 cron_delete_record.py {} {}'.format(now.minute+mins, now.hour+hrs, now.day, now.month, self.file_path, key), comment='delete {}'.format(key))
+						hrs = int(ttl/60)
+						days = int(hrs/24)
+						hrs = hrs%24
+						job = KVDB.cron.new(command='python3 cron_delete_record.py {} {}'.format(self.file_path, key), comment=key)
+						job.minute.on(now.minute+mins)
+						job.hour.on(now.hour+hrs)
+						job.day.on(now.day+days)
+						job.month.on(now.month)
+						KVDB.cron.write()
 
 				retry = False
 				self._setInUse(0)
@@ -213,13 +220,15 @@ if __name__ == '__main__':
 	print("========================================================")
 	print("             KEY-VALUE STORE")
 	print("========================================================")
+
+	file_path = input('Enter File Path: ')
+	db = KVDB(file_path)
+	
 	print('\ncommands: \n# create <key> <json_object> <ttl in minutes (optional)>')
 	print('# read <key>')
 	print('# delete <key>')
-	print('# show_crons')
+	print('# show_cron')
 	print('# exit')
-
-	db = KVDB()
 
 	while(True):
 		command = input('\ncommand > ')
@@ -259,8 +268,8 @@ if __name__ == '__main__':
 			else:
 				print('Error in Deletion')
 
-		elif command == 'show_crons':
-			KVDB.showCrons()
+		elif command == 'show_cron':
+			KVDB.showCron()
 
 		elif command == 'exit':
 			break
